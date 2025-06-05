@@ -33,7 +33,7 @@ export default {
       },
     });
 
-    const publicUrl = `https://<sua-url-publica>/${uuid}.jpg`;
+    const publicUrl = `https://pub-0bb1d8f7c010457cba8e7b4e490786d2.r2.dev/${uuid}.jpg`;
 
     return Response.json({ uuid, url: publicUrl });
   },
