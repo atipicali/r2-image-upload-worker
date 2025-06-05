@@ -9,18 +9,33 @@
  */
 export default {
   async fetch(request, env, ctx) {
-    // Suporte ao método OPTIONS para pré-verificação CORS
-    if (request.method === 'OPTIONS') {
+    const { method, url } = request;
+    const parsedUrl = new URL(url);
+
+    // Suporte CORS para qualquer origem
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    };
+
+    // Preflight
+    if (method === "OPTIONS") {
       return new Response(null, {
         status: 204,
-        headers: corsHeaders(),
+        headers: corsHeaders,
       });
     }
 
-    if (request.method !== 'POST') {
-      return new Response('Method not allowed', {
+    // Apenas para rota /upload
+    if (parsedUrl.pathname !== "/upload") {
+      return new Response("Not Found", { status: 404 });
+    }
+
+    if (method !== "POST") {
+      return new Response("Method Not Allowed", {
         status: 405,
-        headers: corsHeaders(),
+        headers: corsHeaders,
       });
     }
 
@@ -28,19 +43,19 @@ export default {
     if (!contentType.includes("multipart/form-data")) {
       return new Response("Content-Type must be multipart/form-data", {
         status: 400,
-        headers: corsHeaders(),
+        headers: corsHeaders,
       });
     }
 
     try {
       const formData = await request.formData();
       const file = formData.get("image");
-      let uuid = formData.get("uuid")?.toString() ?? crypto.randomUUID();
+      const uuid = formData.get("uuid")?.toString() ?? crypto.randomUUID();
 
       if (!file || !(file instanceof File)) {
         return new Response("Missing or invalid image file", {
           status: 400,
-          headers: corsHeaders(),
+          headers: corsHeaders,
         });
       }
 
@@ -55,25 +70,17 @@ export default {
       return new Response(JSON.stringify({ uuid, url: publicUrl }), {
         status: 200,
         headers: {
-          ...corsHeaders(),
-          'Content-Type': 'application/json',
+          ...corsHeaders,
+          "Content-Type": "application/json",
         },
       });
     } catch (err) {
-      return new Response(JSON.stringify({ error: err.message }), {
+      return new Response("Internal Error: " + err.message, {
         status: 500,
-        headers: corsHeaders(),
+        headers: corsHeaders,
       });
     }
   },
 };
 
-// Função utilitária para headers CORS
-function corsHeaders() {
-  return {
-    'Access-Control-Allow-Origin': '*', // Você pode limitar ao domínio do seu app depois
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-  };
-}
 
