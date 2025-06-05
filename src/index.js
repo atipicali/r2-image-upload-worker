@@ -65,9 +65,7 @@ export default {
         },
       });
 
-      const publicUrl = `https://pub-0bb1d8f7c010457cba8e7b4e490786d2.r2.dev/${uuid}.jpg`;
-
-      return new Response(JSON.stringify({ uuid, url: publicUrl }), {
+      return new Response(JSON.stringify({ uuid }), {
         status: 200,
         headers: {
           ...corsHeaders,
