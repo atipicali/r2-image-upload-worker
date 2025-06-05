@@ -8,10 +8,8 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-import { v4 as uuidv4 } from 'uuid'
-
 export default {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request, env, ctx) {
     if (request.method !== 'POST') {
       return new Response('Method not allowed', { status: 405 });
     }
@@ -22,27 +20,21 @@ export default {
     }
 
     const formData = await request.formData();
-    const file = formData.get("image") as File | null;
-    let uuid = formData.get("uuid")?.toString() ?? uuidv4();
+    const file = formData.get("image");
+    let uuid = formData.get("uuid")?.toString() ?? crypto.randomUUID();
 
-    if (!file) {
-      return new Response("Missing image file", { status: 400 });
+    if (!file || !(file instanceof File)) {
+      return new Response("Missing or invalid image file", { status: 400 });
     }
 
-    // Upload to R2
     await env.BUCKET.put(`${uuid}.jpg`, file.stream(), {
       httpMetadata: {
         contentType: file.type,
       },
     });
 
-    // Opcional: URL pública (precisa configurar public access no R2 ou via CDN)
-    const publicUrl = `https://<sua-url-de-publicacao>/${uuid}.jpg`;
+    const publicUrl = `https://<sua-url-publica>/${uuid}.jpg`;
 
     return Response.json({ uuid, url: publicUrl });
   },
 };
-
-interface Env {
-  BUCKET: R2Bucket;
-}
